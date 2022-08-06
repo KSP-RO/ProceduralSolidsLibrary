@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31424.327
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProceduralSolidsLibrary", "ProceduralSolidsLibrary.csproj", "{141B5D81-BBF3-41A7-83FC-6A31DF8CEDDF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{141B5D81-BBF3-41A7-83FC-6A31DF8CEDDF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{141B5D81-BBF3-41A7-83FC-6A31DF8CEDDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{141B5D81-BBF3-41A7-83FC-6A31DF8CEDDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{141B5D81-BBF3-41A7-83FC-6A31DF8CEDDF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {69EA1C29-3AAC-496F-9712-28ECF2F07A61}
+	EndGlobalSection
+EndGlobal
