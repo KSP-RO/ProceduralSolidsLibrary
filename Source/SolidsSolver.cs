@@ -9,31 +9,51 @@ namespace ProceduralSolidsLibrary
 		public PropellantConfig propellant;
 		public Casing casing;
 		public Nozzle nozzle;
-		private float _length;
-		public float length { get => _length; set {_length = value; casing.cylinderLength = _length-_diameter;} }
-		private float _diameter;
-		public float diameter { get => _diameter; set {_diameter = value; casing.diameter = _diameter;} }
+		public bool thrustIsInput;
+		public bool throatAreaIsInput;
+		public bool thrustPercentIsInput;
 
-		public SolidsSolver() {casing = new Casing();}
+		public SolidsSolver() { casing = new Casing(); }
 		public SolidsSolver(PropellantConfig propellant, CasingMaterialConfig casingMaterial, Nozzle nozzle, float length, float diameter)
 		{
 			this.propellant = propellant;
 			this.nozzle = nozzle;
-			casing = new Casing(casingMaterial, length-diameter, diameter);
-			this.length = length;
-			this.diameter = diameter;
-			// casing.mawp = combustionPressure;
+			casing = new Casing(casingMaterial, length - diameter, diameter);
+			Length = length;
+			Diameter = diameter;
+		}
+
+		private float _length;
+		public float Length
+		{
+			get => _length;
+			set
+			{
+				_length = value;
+				casing.cylinderLength = _length - _diameter;
+			}
+		}
+
+		private float _diameter;
+		public float Diameter
+		{
+			get => _diameter;
+			set
+			{
+				_diameter = value;
+				casing.diameter = _diameter;
+			}
 		}
 
 		private float _thrust;
-		public float thrust
+		public float Thrust
 		{
 			get
 			{
 				return (thrustIsInput, throatAreaIsInput) switch
 				{
 					(true, false) => _thrust,
-					(false, true) => g0 * Isp * massFlow,
+					(false, true) => g0 * Isp * MassFlow,
 					_ => throw new System.Exception("Invalid boolean combination in 'Thrust'")
 				};
 			}
@@ -44,13 +64,13 @@ namespace ProceduralSolidsLibrary
 		}
 
 		private float _throatArea;
-		public float throatArea
+		public float ThroatArea
 		{
 			get
 			{
 				return (thrustIsInput, throatAreaIsInput) switch
 				{
-					(true, false) => burnArea / (Mathf.Pow(combustionPressure, 1f - propellant.burnRateExponent) / (propellant.density * propellant.burnRateCoeff * propellant.characVel)),
+					(true, false) => BurnArea / (Mathf.Pow(CombustionPressure, 1f - propellant.burnRateExponent) / (propellant.density * propellant.burnRateCoeff * propellant.CharacVel)),
 					(false, true) => _throatArea,
 					_ => throw new System.Exception("Invalid boolean combination in 'throatArea'")
 				};
@@ -61,43 +81,40 @@ namespace ProceduralSolidsLibrary
 			}
 		}
 
-		public float Isp => nozzle.nozzleCoeff * propellant.characVel / g0;
-		public bool thrustIsInput;
-		public bool throatAreaIsInput;
-		public bool thrustPercentIsInput;
-		public float massFlow =>
+		public float Isp => nozzle.nozzleCoeff * propellant.CharacVel / g0;
+		public float MassFlow =>
 			(thrustIsInput, throatAreaIsInput) switch
 			{
 				(true, false) => _thrust / (g0 * Isp),
-				(false, true) => combustionPressure * throatArea / propellant.characVel,
+				(false, true) => CombustionPressure * ThroatArea / propellant.CharacVel,
 				_ => throw new System.Exception("Invalid boolean combination in 'massFlow'")
 			};
 
 		private float _combustionPressure;
-		public float combustionPressure
+		public float CombustionPressure
 		{
 			get
 			{
 				_combustionPressure = (thrustIsInput, throatAreaIsInput) switch
 				{
-					(true, false) => Mathf.Pow(massFlow/(burnArea * propellant.density * propellant.burnRateCoeff), 1f/propellant.burnRateExponent),
-					(false, true) =>Mathf.Pow(burnArea / throatArea * propellant.density * propellant.burnRateCoeff * propellant.characVel, 1f / (1f - propellant.burnRateExponent)),
+					(true, false) => Mathf.Pow(MassFlow / (BurnArea * propellant.density * propellant.burnRateCoeff), 1f / propellant.burnRateExponent),
+					(false, true) => Mathf.Pow(BurnArea / ThroatArea * propellant.density * propellant.burnRateCoeff * propellant.CharacVel, 1f / (1f - propellant.burnRateExponent)),
 					_ => throw new System.Exception("Invalid boolean combination in 'combustionPressure'")
 				};
 				casing.mawp = _combustionPressure;
 				return _combustionPressure;
 			}
 		}
-		private float maxThrust = 100_000_000f;
+		private readonly float maxThrust = 100_000_000f;
 		private float _thrustPercent;
-		public float thrustPercent
+		public float ThrustPercent
 		{
 			get
 			{
 				return (thrustIsInput, throatAreaIsInput, thrustPercentIsInput) switch
 				{
 					(false, false, true) => _thrustPercent,
-					(_, _, false) => thrust / maxThrust * 100f,
+					(_, _, false) => Thrust / maxThrust * 100f,
 					_ => throw new System.Exception("Invalid boolean combination in 'thrustPercent'")
 				};
 			}
@@ -106,15 +123,15 @@ namespace ProceduralSolidsLibrary
 				_thrustPercent = value;
 			}
 		}
-		public float dryMass => casing.mass;
-		public float wetVolume => casing.innerVolume;
-		public float burnArea => Mathf.PI * diameter * length * 0.54f; // TODO: 0.54 is a temp value. Should it be based on thrustCurve?
+		public float DryMass => casing.Mass;
+		public float WetVolume => casing.InnerVolume;
+		public float BurnArea => Mathf.PI * Diameter * Length * 0.54f; // TODO: 0.54 is a temp value. Should it be based on thrustCurve?
 
 		#region  Helper Outputs
-		public float fuelMass => wetVolume * propellant.density;
-		public float mass => dryMass + fuelMass;
-		public float twr => thrust/g0/mass;
-		public float burnTime => fuelMass/massFlow;
+		public float FuelMass => WetVolume * propellant.density;
+		public float Mass => DryMass + FuelMass;
+		public float Twr => Thrust/g0/Mass;
+		public float BurnTime => FuelMass/MassFlow;
 
 		#endregion
 

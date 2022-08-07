@@ -21,7 +21,8 @@ namespace ProceduralSolidsLibrary
 		public float heatCapacityRatio;
 		[Persistent]
 		public float molarMass;
-		public float characVel => Mathf.Sqrt(heatCapacityRatio * R * molarMass * combustionTemp) / (heatCapacityRatio * Mathf.Sqrt(Mathf.Pow(2 / (heatCapacityRatio + 1), (heatCapacityRatio + 1)/(heatCapacityRatio - 1))));
+
+		public float CharacVel => Mathf.Sqrt(heatCapacityRatio * R * molarMass * combustionTemp) / (heatCapacityRatio * Mathf.Sqrt(Mathf.Pow(2 / (heatCapacityRatio + 1), (heatCapacityRatio + 1)/(heatCapacityRatio - 1))));
 
 		/// <summary>
 		/// <para><paramref name="molarMass"></paramref> is in g / mol</para>
@@ -116,11 +117,11 @@ namespace ProceduralSolidsLibrary
 		}
 
 		// FIXME: Currently clamping thickness here.
-		public float thickness => Mathf.Min(diameter / 2f, (mawp * (diameter - material.corrosionSafety) + 2f * material.mats * material.weldEff * material.corrosionSafety) / (2f * material.mats * material.weldEff + mawp));
+		public float Thickness => Mathf.Min(diameter / 2f, (mawp * (diameter - material.corrosionSafety) + 2f * material.mats * material.weldEff * material.corrosionSafety) / (2f * material.mats * material.weldEff + mawp));
 
-		public float innerVolume => PillVolume(cylinderLength - diameter, diameter - 2 * thickness);
-		private float volume => PillVolume(cylinderLength - diameter, diameter) - innerVolume;
-		public float mass => material.density * volume;
+		public float InnerVolume => PillVolume(cylinderLength - diameter, diameter - 2 * Thickness);
+		private float Volume => PillVolume(cylinderLength - diameter, diameter) - InnerVolume;
+		public float Mass => material.density * Volume;
 
 		private static float PillVolume(float cylinderLength, float diameter)
 		{
