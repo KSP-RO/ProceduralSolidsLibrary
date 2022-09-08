@@ -10,49 +10,16 @@ namespace ProceduralSolidsLibrary
 		public GrainGeometryConfig grainGeometry;
 		public Casing casing;
 		public NozzleConfig nozzle;
-		public bool thrustIsInput = false;
-		public bool throatAreaIsInput = false;
-		public bool thrustPercentIsInput = false;
-		public bool combustionPressureIsInput = false;
 
-		public SolidsSolver() { casing = new Casing(); nozzle = new NozzleConfig(); }
-		// public SolidsSolver(PropellantConfig propellant, CasingMaterialConfig casingMaterial, Nozzle nozzle, float length, float diameter)
-		// {
-		// 	this.propellant = propellant;
-		// 	this.nozzle = nozzle;
-		// 	casing = new Casing(casingMaterial, length - diameter, diameter);
-		// 	Length = length;
-		// 	Diameter = diameter;
-		// }
-
-		public static SolidsSolver ThrustAsInput(PropellantConfig initialPropellant, CasingMaterialConfig initialCasingMaterial, float initialThrust)
+		public SolidsSolver(PropellantConfig propellant, GrainGeometryConfig grainGeometry, CasingMaterialConfig casingMaterial, NozzleConfig nozzle, float length, float diameter, float combustionPressure)
 		{
-			var solver = new SolidsSolver();
-			solver.propellant = initialPropellant;
-			solver.casing.material = initialCasingMaterial;
-			solver.thrustIsInput = true;
-			solver.Thrust = initialThrust;
-			return solver;
-		}
-
-		public static SolidsSolver ThroatAreaAsInput(PropellantConfig initialPropellant, CasingMaterialConfig initialCasingMaterial, float initialThroatArea)
-		{
-			var solver = new SolidsSolver();
-			solver.propellant = initialPropellant;
-			solver.casing.material = initialCasingMaterial;
-			solver.throatAreaIsInput = true;
-			solver.ThroatArea = initialThroatArea;
-			return solver;
-		}
-
-		public static SolidsSolver PressureAsInput(PropellantConfig initialPropellant, CasingMaterialConfig initialCasingMaterial, float initialPressure)
-		{
-			var solver = new SolidsSolver();
-			solver.propellant = initialPropellant;
-			solver.casing.material = initialCasingMaterial;
-			solver.combustionPressureIsInput = true;
-			solver.CombustionPressure = initialPressure;
-			return solver;
+			this.propellant = propellant;
+			this.grainGeometry = grainGeometry;
+			this.nozzle = nozzle;
+			casing = new Casing(casingMaterial, length, diameter);
+			Length = length;
+			Diameter = diameter;
+			CombustionPressure = combustionPressure;
 		}
 
 		private float _length;
@@ -62,7 +29,7 @@ namespace ProceduralSolidsLibrary
 			set
 			{
 				_length = value;
-				casing.cylinderLength = _length - _diameter;
+				casing.pillLength = _length;
 			}
 		}
 
@@ -77,100 +44,30 @@ namespace ProceduralSolidsLibrary
 			}
 		}
 
-		private float _thrust;
-		public float Thrust
-		{
-			get
-			{
-				return (thrustIsInput, throatAreaIsInput, combustionPressureIsInput) switch
-				{
-					(true, false, false) => _thrust,
-					(false, true, false) => g0 * Isp * MassFlow,
-					(false, false, true) => g0 * Isp * MassFlow,
-					_ => throw new System.Exception("Invalid boolean combination in 'Thrust'")
-				};
-			}
-			set
-			{
-				_thrust = value;
-			}
-		}
+		public float Thrust => g0 * Isp * MassFlow;
 
-		private float _throatArea;
-		public float ThroatArea
-		{
-			get
-			{
-				return (thrustIsInput, throatAreaIsInput, combustionPressureIsInput) switch
-				{
-					(true, false, false) => BurnArea / (Mathf.Pow(CombustionPressure, 1f - propellant.burnRateExponent) / (propellant.density * propellant.burnRateCoeff * propellant.characVel)),
-					(false, true, false) => _throatArea,
-					(false, false, true) => BurnArea / (Mathf.Pow(CombustionPressure, 1f - propellant.burnRateExponent) / (propellant.density * propellant.burnRateCoeff * propellant.characVel)),
-					_ => throw new System.Exception("Invalid boolean combination in 'throatArea'")
-				};
-			}
-			set
-			{
-				_throatArea = value;
-			}
-		}
+		public float ThroatArea => BurnArea * propellant.density * propellant.burnRateCoeff * propellant.characVel / Mathf.Pow(CombustionPressure, 1f - propellant.burnRateExponent);
 
 		public float Isp => nozzle.nozzleCoeff * propellant.characVel / g0;
 		public FloatCurve AtmosphereCurve => nozzle.atmosphereCurve;
-		public float MassFlow =>
-			(thrustIsInput, throatAreaIsInput, combustionPressureIsInput) switch
-			{
-				(true, false, false) => _thrust / (g0 * Isp),
-				(false, true, false) => CombustionPressure * ThroatArea / propellant.characVel,
-				(false, false, true) => CombustionPressure * ThroatArea / propellant.characVel,
-				_ => throw new System.Exception("Invalid boolean combination in 'massFlow'")
-			};
+		public float MassFlow => CombustionPressure * ThroatArea / propellant.characVel;
 
 		private float _combustionPressure;
 		public float CombustionPressure
 		{
-			get
-			{
-				_combustionPressure = (thrustIsInput, throatAreaIsInput, combustionPressureIsInput) switch
-				{
-					(true, false, false) => Mathf.Pow(MassFlow / (BurnArea * propellant.density * propellant.burnRateCoeff), 1f / propellant.burnRateExponent),
-					(false, true, false) => Mathf.Pow(BurnArea / ThroatArea * propellant.density * propellant.burnRateCoeff * propellant.characVel, 1f / (1f - propellant.burnRateExponent)),
-					(false, false, true) => _combustionPressure,
-					_ => throw new System.Exception("Invalid boolean combination in 'combustionPressure'")
-				};
-				casing.mawp = _combustionPressure;
-				return _combustionPressure;
-			}
+			get => _combustionPressure;
 			set
 			{
 				_combustionPressure = value;
 				casing.mawp = _combustionPressure;
 			}
 		}
-		private readonly float maxThrust = 100_000_000f;
-		private float _thrustPercent;
-		public float ThrustPercent
-		{
-			get
-			{
-				return (thrustIsInput, throatAreaIsInput, thrustPercentIsInput) switch
-				{
-					(false, false, true) => _thrustPercent,
-					(_, _, false) => Thrust / maxThrust * 100f,
-					_ => throw new System.Exception("Invalid boolean combination in 'thrustPercent'")
-				};
-			}
-			set
-			{
-				_thrustPercent = value;
-			}
-		}
 		public float DryMass => casing.Mass;
 		public float WetVolume => casing.InnerVolume * grainGeometry.propellantFraction;
 		public FloatCurve ThrustCurve => grainGeometry.thrustCurve;
-		public float BurnArea => Mathf.PI * Diameter * Length * grainGeometry.burnAreaScale; //0.54f; // TODO: 0.54 is a temp value. Should it be based on thrustCurve?
+		public float BurnArea => Mathf.PI * Diameter * Length * grainGeometry.burnAreaScale;
 
-		#region  Helper Outputs
+		#region Helper Outputs
 		public float FuelMass => WetVolume * propellant.density;
 		public float Mass => DryMass + FuelMass;
 		public float Twr => Thrust/g0/Mass;
@@ -179,39 +76,60 @@ namespace ProceduralSolidsLibrary
 		#endregion
 
 		#region Limits
-		// float maxThrust => g0 * Isp * maxMassFlow;
-		// float minThrust => g0 * Isp * minMassFlow;
+		// free:
+		// diam, presets
+		// has limits:
+		// throatArea max
+		// thickness min/max based on length for min
+		// pressure based on thickness and throatArea
+		// length limited by diameter as min and maxThickness
 
-		// float maxMassFlow => Mathf.Min(maxMassFlowFromPressure, maxMassFlowFromThroat);
-
-		// public float maxMassFlowFromPressure => maxCombustionPressure * throatArea / propellant.characVel;
-		// public float minMassFlowFromPressure => minCombustionPressure * throatArea / propellant.characVel;
-
-		// public float maxMassFlowFromThroat => combustionPressure * maxThroatArea / propellant.characVel;
+		float MaxThroatArea => Diameter * Diameter * Mathf.PI / 4f * 0.25f; //FIXME: just 1/4 of the bottom area currently
+		float MinPressureFromArea => Mathf.Pow(BurnArea / MaxThroatArea * propellant.density * propellant.burnRateCoeff * propellant.characVel, 1f / (1f - propellant.burnRateExponent));
+		float MaxPressure => casing.MaxPressure;
+		float MinPressure => Mathf.Max(casing.MinPressure, MinPressureFromArea);
+		float MaxLength => casing.MaxLength;
+		float MinLength => casing.MinLength;
+		float MaxDiameter => casing.MaxDiameter;
 		#endregion
 	}
 
 	public class Casing
 	{
 		public CasingMaterialConfig material;
-		public float cylinderLength;
+		public float pillLength;
 		public float diameter;
 		public float mawp;
 
-		public Casing() {}
-		public Casing(CasingMaterialConfig material, float cylinderLength, float diameter)
+		public Casing(CasingMaterialConfig material, float pillLength, float diameter)
 		{
 			this.material = material;
-			this.cylinderLength = cylinderLength;
+			this.pillLength = pillLength;
 			this.diameter = diameter;
 		}
 
-		// FIXME: Currently clamping thickness here.
-		public float Thickness => Mathf.Min(diameter / 2f, (mawp * (diameter - material.corrosionSafety) + 2f * material.tensileStrength * material.weldEff * material.corrosionSafety) / (2f * material.tensileStrength * material.weldEff + mawp));
-
-		public float InnerVolume => PillVolume(cylinderLength - diameter, diameter - 2 * Thickness);
-		private float Volume => PillVolume(cylinderLength - diameter, diameter) - InnerVolume;
+		private float Thickness => ThicknessFromPressure(mawp);
+		public float InnerVolume => PillVolume(pillLength - diameter, diameter - 2 * Thickness);
+		private float Volume => PillVolume(pillLength - diameter, diameter) - InnerVolume;
 		public float Mass => material.density * Volume;
+		// Limits
+		private float MaxThickness => diameter / 2f * material.maxThicknessFraction;
+		public float MaxPressure => PressureFromThickness(MaxThickness);
+		private float MinThickness => pillLength * 0.001f; // FIXME: based on diameter too? A material constant?
+		public float MaxLength => MaxThickness / 0.001f; // FIXME: inverse of above
+		public float MinLength => diameter; // Assumes domes at the end, so has to be at least diameter long
+		public float MaxDiameter => MaxLength; // TODO: Needed?
+		public float MinPressure => PressureFromThickness(MinThickness);
+
+		private float PressureFromThickness(float thickness)
+		{
+			return material.tensileStrength * thickness * material.weldEff / (diameter / 2f * material.safetyFactor);
+		}
+
+		private float ThicknessFromPressure(float pressure)
+		{
+			return pressure * diameter / 2f * material.safetyFactor / (material.tensileStrength * material.weldEff);
+		}
 
 		private static float PillVolume(float cylinderLength, float diameter)
 		{

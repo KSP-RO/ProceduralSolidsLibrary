@@ -89,15 +89,18 @@ namespace ProceduralSolidsLibrary
 		[Persistent] public string name;
 		[Persistent] public float density;
 		[Persistent] public float tensileStrength;
-		[Persistent] public float corrosionSafety = 0f;
+		// [Persistent] public float corrosionSafety = 0f;
+		[Persistent] public float safetyFactor = 1f;
 		[Persistent] public float weldEff = 1f;
+		[Persistent] public float maxThicknessFraction = 1f;
 
-		public CasingMaterialConfig(float density, float tensileStrength, float corrosionSafety = 0f, float weldEff = 1f)
+		public CasingMaterialConfig(float density, float tensileStrength, float safetyFactor = 0f, float weldEff = 1f, float maxThicknessFraction = 1f)
 		{
 			this.density = density;
 			this.tensileStrength = tensileStrength;
-			this.corrosionSafety = corrosionSafety;
+			this.safetyFactor = safetyFactor;
 			this.weldEff = weldEff;
+			this.maxThicknessFraction = maxThicknessFraction;
 		}
 		public CasingMaterialConfig() {}
 		public CasingMaterialConfig(ConfigNode node)
