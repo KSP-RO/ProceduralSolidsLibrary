@@ -10,11 +10,9 @@ namespace ProceduralSolidsLibrary
 		[Persistent] public string name;
 		[Persistent] public float burnRateCoeff;
 		[Persistent] public float burnRateExponent;
+		[Persistent] public float heatCapacityRatio;
 		[Persistent] public float density;
 		[Persistent] public float characVel;
-		// [Persistent] public float combustionTemp;
-		// [Persistent] public float heatCapacityRatio;
-		// [Persistent] public float molarMass;
 
 		// public float CharacVel => Mathf.Sqrt(heatCapacityRatio * R * combustionTemp / molarMass) / (heatCapacityRatio * Mathf.Sqrt(Mathf.Pow(2 / (heatCapacityRatio + 1), (heatCapacityRatio + 1)/(heatCapacityRatio - 1))));
 
@@ -22,14 +20,14 @@ namespace ProceduralSolidsLibrary
 		/// <para><paramref name="molarMass"></paramref> is in kg / mol</para>
 		/// <para><paramref name="density"></paramref> is in kg / m^3</para>
 		/// </summary>
-		public PropellantConfig(float burnRateCoeff, float burnRateExponent, float density, float characVel)//, float combustionTemp, float heatCapacityRatio, float molarMass)
+		public PropellantConfig(float burnRateCoeff, float burnRateExponent, float heatCapacityRatio, float density, float characVel)//, float combustionTemp, float heatCapacityRatio, float molarMass)
 		{
 			this.burnRateCoeff = burnRateCoeff;
 			this.burnRateExponent = burnRateExponent;
+			this.heatCapacityRatio = heatCapacityRatio;
 			this.density = density;
 			this.characVel = characVel;
 			// this.combustionTemp = combustionTemp;
-			// this.heatCapacityRatio = heatCapacityRatio;
 			// this.molarMass = molarMass;
 		}
 		public PropellantConfig() {}
@@ -126,6 +124,7 @@ namespace ProceduralSolidsLibrary
 
 		[Persistent] public string name;
 		[Persistent] public float nozzleCoeff; // Is this needed with atmo curve?
+		[Persistent] public float designPressurePa;
 		[Persistent] public FloatCurve atmosphereCurve; // Currently normalized to 1 and nozzleCoeff is used to scale
 		[Persistent] public float gimbalRange = 0f;
 

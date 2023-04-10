@@ -147,6 +147,12 @@ namespace ProceduralSolidsLibrary
 				casing.mawp = _combustionPressure;
 			}
 		}
+
+		public float ExpansionRatio => 1f / (Mathf.Pow((propellant.heatCapacityRatio + 1f) / 2f, 1f / (propellant.heatCapacityRatio - 1f))
+											* Mathf.Pow(nozzle.designPressurePa / CombustionPressure, 1f / propellant.heatCapacityRatio)
+											* Mathf.Sqrt((propellant.heatCapacityRatio + 1f) / (propellant.heatCapacityRatio - 1f)
+											* (1f - Mathf.Pow(nozzle.designPressurePa / CombustionPressure, (propellant.heatCapacityRatio - 1f) / propellant.heatCapacityRatio))));
+
 		private readonly float maxThrust = 100_000_000f;
 		private float _thrustPercent;
 		public float ThrustPercent
@@ -173,8 +179,8 @@ namespace ProceduralSolidsLibrary
 		#region  Helper Outputs
 		public float FuelMass => WetVolume * propellant.density;
 		public float Mass => DryMass + FuelMass;
-		public float Twr => Thrust/g0/Mass;
-		public float BurnTime => FuelMass/MassFlow;
+		public float Twr => Thrust / g0 / Mass;
+		public float BurnTime => FuelMass / MassFlow;
 
 		#endregion
 
